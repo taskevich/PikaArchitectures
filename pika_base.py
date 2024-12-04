@@ -4,7 +4,7 @@ from typing import Optional
 from pika.adapters.blocking_connection import BlockingChannel, BlockingConnection
 
 
-class RabbitMQWorkerBase:
+class AMQPWorkerBase:
     """ Pika base class for working with RabbitMQ """
 
     def __init__(
@@ -24,6 +24,6 @@ class RabbitMQWorkerBase:
             )
         )
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name)
-        self.channel.exchange_declare(exchange=self.exchange_name, exchange_type="direct")
+        self.channel.queue_declare(queue=self.queue_name, durable=True)
+        self.channel.exchange_declare(exchange=self.exchange_name, exchange_type="direct", durable=True)
         self.channel.queue_bind(queue=self.queue_name, exchange=self.exchange_name)

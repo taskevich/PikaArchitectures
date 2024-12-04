@@ -1,26 +1,27 @@
+import json
+import logging
 import time
-
 from threading import Thread
 from central_controller import CentralController
+from kombu_pipline.workers import AMQPWorkerProducer, AMQPWorkerConsumer
 from pipeline_controller import PipelineController
-from workers import AMQPConsumer, RabbitMQProducer
 
-controller_consumer = AMQPConsumer(
+controller_producer = AMQPWorkerProducer(
     queue_name="service-1",
     exchange_name="services",
 )
 
-controller_producer = RabbitMQProducer(
+controller_consumer = AMQPWorkerConsumer(
     queue_name="service-1",
     exchange_name="services",
 )
 
-pipeline_consumer = AMQPConsumer(
+pipeline_producer = AMQPWorkerProducer(
     queue_name="service-2",
     exchange_name="services",
 )
 
-pipeline_producer = RabbitMQProducer(
+pipeline_consumer = AMQPWorkerConsumer(
     queue_name="service-2",
     exchange_name="services",
 )
@@ -31,28 +32,26 @@ central_controller = CentralController(
 )
 pipeline_consumer.handler = central_controller.handle_message
 
-pipeline_controller = PipelineController(
+pipline_controller = PipelineController(
     consumer=controller_consumer,
-    pipline_producer=pipeline_producer,
+    producer=pipeline_producer,
 )
-controller_consumer.handler = pipeline_controller.handle_message
+controller_consumer.handler = pipline_controller.handle_message
 
 
 def main():
-    t1 = Thread(target=pipeline_consumer.run)
-    t2 = Thread(target=pipeline_producer.run)
-    t3 = Thread(target=controller_consumer.run)
-    t4 = Thread(target=controller_producer.run)
+    t1 = Thread(target=controller_consumer.run)
+    t2 = Thread(target=pipeline_consumer.run)
+    t3 = Thread(target=controller_producer.run)
+    t4 = Thread(target=pipeline_producer.run)
 
     t1.start()
     t2.start()
     t3.start()
     t4.start()
 
-    time.sleep(10)
-
     while True:
-        controller_producer.publish(repr({"message": "Hello, World!"}))
+        controller_producer.publish(repr({"message": "Hello, world!"}))
         time.sleep(10)
 
 

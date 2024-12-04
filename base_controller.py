@@ -20,16 +20,18 @@ class ControllerBase:
 
     def handle_message(
             self,
-            channel,
-            method_frame,
-            header_frame,
-            message
+            *args,
+            **kwargs
     ):
+        if isinstance(args[-1], bytes):
+            message = args[-1]
+        else:
+            message = args[0]
         print(f"[{self.__class__.__name__}] Handling message: {message}")
         try:
             message = self.handle_packet(message)
         except Exception as ex:
-            logging.error(ex)
+            logging.error(f"[{self.__class__.__name__}] {ex}", stack_info=True)
         finally:
             if self.pipline_producer and message:
                 self.pipline_producer.publish(message)
